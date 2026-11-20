@@ -1,3 +1,25 @@
+def abs(x):
+    if x < 0:
+        x = -x
+    return x
+
+def coord(N, idx):
+    return idx // N, idx % N
+
+def _1d(N, row, col):
+    return N * row + col
+
+def cost(grid, start, end):
+    n = len(grid)
+    sr, sc = coord(n, start)
+    er, ec = coord(n, end)
+
+    if abs(sr - er) + abs(sc - ec) == 1:
+        step_cost = grid[er][ec] - grid[sr][sc]
+    else:
+        raise ValueError
+    return max(step_cost, 0) + 1
+
 T = int(input())
 
 for test_case in range(1, T+1):
@@ -5,33 +27,37 @@ for test_case in range(1, T+1):
     grid = [list(map(int, input().split())) for _ in range(N)]
     min_cost = [[float("inf")] * N for _ in range(N)]
 
-    min_cost[0][0] = 0
-    for i in range(1, N):
-        min_cost[0][i] = (
-                min_cost[0][i-1] +
-                max(grid[0][i] - grid[0][i-1], 0)
-                + 1
-        )
-        min_cost[i][0] = (
-            min_cost[i-1][0] +
-            max(grid[i][0] - grid[i-1][0], 0)
-            + 1
-        )
+    g_size = N * N
+    graph = []
+    for i in range(g_size):
+        graph.append([])
+        irow, icol = coord(N, i)
 
-    for row in range(1, N):
-        for col in range(1, N):
-            min_cost[row][col] = (
-                min(
-                    min_cost[row-1][col]
-                    + max(
-                        grid[row][col]
-                        - grid[row-1][col], 0),
-                    min_cost[row][col-1]
-                    + max(
-                        grid[row][col]
-                        - grid[row][col-1], 0)
-                    )
-                + 1
-            )
+        if irow > 0:
+            graph[i].append((cost(grid, i, i - N), i - N))
+        if irow < N - 1:
+            graph[i].append((cost(grid, i, i + N), i + N))
+        if icol > 0:
+            graph[i].append((cost(grid, i, i - 1), i - 1))
+        if icol < N - 1:
+            graph[i].append((cost(grid, i, i + 1), i + 1))
 
-    print(f"#{test_case} {min_cost[N-1][N-1]}")
+    D = [float("inf")] * g_size
+    P = [None] * g_size
+    visited = [False] * g_size
+    D[0] = 0
+
+    for _ in range(g_size):
+        minidx = -1
+        mincost = float('inf')
+        for i in range(g_size):
+            if not visited[i] and D[i] < mincost:
+                minidx = i
+                mincost = D[i]
+        visited[minidx] = True
+        for weight, v in graph[minidx]:
+            if not visited[v] and D[minidx] + weight < D[v]:
+                D[v] = D[minidx] + weight
+                P[v] = minidx
+
+    print(f"#{test_case} {D[g_size - 1]}")
