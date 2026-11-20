@@ -1,3 +1,5 @@
+import heapq
+
 def abs(x):
     if x < 0:
         x = -x
@@ -25,7 +27,6 @@ T = int(input())
 for test_case in range(1, T+1):
     N = int(input())
     grid = [list(map(int, input().split())) for _ in range(N)]
-    min_cost = [[float("inf")] * N for _ in range(N)]
 
     g_size = N * N
     graph = []
@@ -46,18 +47,19 @@ for test_case in range(1, T+1):
     P = [None] * g_size
     visited = [False] * g_size
     D[0] = 0
+    heap = [(0, 0)]
 
-    for _ in range(g_size):
-        minidx = -1
-        mincost = float('inf')
-        for i in range(g_size):
-            if not visited[i] and D[i] < mincost:
-                minidx = i
-                mincost = D[i]
+    while heap:
+        mincost, minidx = heapq.heappop(heap)
+        if visited[minidx]:
+            continue
+        if minidx == g_size - 1:
+            break
         visited[minidx] = True
         for weight, v in graph[minidx]:
             if not visited[v] and D[minidx] + weight < D[v]:
                 D[v] = D[minidx] + weight
                 P[v] = minidx
+                heapq.heappush(heap, (D[v], v))
 
     print(f"#{test_case} {D[g_size - 1]}")
